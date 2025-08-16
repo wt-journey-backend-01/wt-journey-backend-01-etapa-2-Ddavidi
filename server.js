@@ -9,6 +9,14 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Servidor rodando!' });
 });
 
+// Importação das rotas
+const agentesRouter = require('./routes/agenteRoutes');
+const casosRouter = require('./routes/casoRoutes');
+
+// Registro das rotas com seus respectivos prefixos
+app.use('/agentes', agentesRouter);
+app.use('/casos', casosRouter);
+
 app.listen(PORT, () => {
     console.log(`Servidor do Departamento de Polícia rodando em localhost:${PORT}`);
 });
