@@ -10,8 +10,8 @@ app.get('/health', (req, res) => {
 });
 
 // Importação das rotas
-const agentesRouter = require('./routes/agenteRoutes');
-const casosRouter = require('./routes/casoRoutes');
+const agentesRouter = require('./routes/agentesRoutes');
+const casosRouter = require('./routes/casosRoutes');
 
 // Registro das rotas com seus respectivos prefixos
 app.use('/agentes', agentesRouter);
