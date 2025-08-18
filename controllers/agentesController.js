@@ -1,109 +1,61 @@
-const agentesRepository = require('../repositories/agentesRepository');
-const { validateAgenteData, validatePartialAgenteData } = require('../utils/validator');
+const agentesRepository = require("../repositories/agentesRepository");
 
-/**
- * Lista todos os agentes, com filtros e ordenação opcionais.
- */
+// --- Agentes Controller ---
+
+// Listar todos os agentes
 function getAllAgentes(req, res) {
-  try {
-    const { cargo, sort } = req.query;
-    const agentes = agentesRepository.findAll(cargo, sort);
-    res.status(200).json(agentes);
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno no servidor" });
-  }
+  const agentes = agentesRepository.findAll();
+  res.status(200).json(agentes);
 }
 
-/**
- * Busca um agente específico pelo ID.
- */
+// Buscar agente por ID
 function getAgenteById(req, res) {
-  try {
-    const { id } = req.params;
-    const agente = agentesRepository.findById(id);
-    if (!agente) {
-      return res.status(404).json({ message: "Agente não encontrado" });
-    }
-    res.status(200).json(agente);
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno no servidor" });
-  }
+  const { id } = req.params;
+  const agente = agentesRepository.findById(id);
+  if (!agente) return res.status(404).json({ status: 404, message: "Agente não encontrado" });
+  res.status(200).json(agente);
 }
 
-/**
- * Cria um novo agente.
- */
+// Criar agente
 function createAgente(req, res) {
-  try {
-    const { errors, data } = validateAgenteData(req.body);
-    if (errors) {
-      return res.status(400).json({ status: 400, message: "Parâmetros inválidos", errors });
-    }
-    const novoAgente = agentesRepository.create(data);
-    res.status(201).json(novoAgente);
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno no servidor" });
+  const { nome, cargo, dataDeIncorporacao } = req.body;
+  if (!nome || !cargo || !dataDeIncorporacao) {
+    return res.status(400).json({ status: 400, message: "Parâmetros inválidos" });
   }
+  const novoAgente = agentesRepository.create({ nome, cargo, dataDeIncorporacao });
+  res.status(201).json(novoAgente);
 }
 
-/**
- * Atualiza todos os dados de um agente (PUT).
- */
+// Atualizar agente completo
 function updateAgente(req, res) {
-  try {
-    const { id } = req.params;
-    if (!agentesRepository.findById(id)) {
-        return res.status(404).json({ message: "Agente não encontrado" });
-    }
+  const { id } = req.params;
+  const agenteAtualizado = agentesRepository.update(id, req.body);
+  if (!agenteAtualizado) return res.status(404).json({ status: 404, message: "Agente não encontrado" });
+  res.status(200).json(agenteAtualizado);
+}
 
-    const { errors, data } = validateAgenteData(req.body);
-    if (errors) {
-      return res.status(400).json({ status: 400, message: "Parâmetros inválidos", errors });
-    }
-    
-    const agenteAtualizado = agentesRepository.update(id, data);
-    res.status(200).json(agenteAtualizado);
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno no servidor" });
+// Atualizar agente parcialmente
+function patchAgente(req, res) {
+  const { id } = req.params;
+  const dadosAtualizados = req.body;
+
+  // Não permitir alteração de ID
+  if (dadosAtualizados.id && dadosAtualizados.id !== id) {
+    return res.status(400).json({ status: 400, message: "Não é permitido alterar o ID do agente." });
   }
+
+  const agenteAtualizado = agentesRepository.update(id, dadosAtualizados);
+  if (!agenteAtualizado) return res.status(404).json({ status: 404, message: "Agente não encontrado" });
+
+  res.status(200).json(agenteAtualizado);
 }
 
-/**
- * Atualiza parcialmente os dados de um agente (PATCH).
- */
-function updatePartialAgente(req, res) {
-    try {
-        const { id } = req.params;
-        if (!agentesRepository.findById(id)) {
-            return res.status(404).json({ message: "Agente não encontrado" });
-        }
-
-        const { errors, data } = validatePartialAgenteData(req.body);
-        if (errors) {
-            return res.status(400).json({ status: 400, message: "Parâmetros inválidos", errors });
-        }
-        
-        const agenteAtualizado = agentesRepository.update(id, data);
-        res.status(200).json(agenteAtualizado);
-    } catch (error) {
-        res.status(500).json({ message: "Erro interno no servidor" });
-    }
-}
-
-/**
- * Remove um agente.
- */
+// Remover agente
 function deleteAgente(req, res) {
-  try {
-    const { id } = req.params;
-    const removido = agentesRepository.remove(id);
-    if (!removido) {
-      return res.status(404).json({ message: "Agente não encontrado" });
-    }
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ message: "Erro interno no servidor" });
-  }
+  const { id } = req.params;
+  const removido = agentesRepository.remove(id);
+  if (!removido) return res.status(404).json({ status: 404, message: "Agente não encontrado" });
+  res.status(204).send();
 }
 
 module.exports = {
@@ -111,6 +63,6 @@ module.exports = {
   getAgenteById,
   createAgente,
   updateAgente,
-  updatePartialAgente,
-  deleteAgente
+  patchAgente,
+  deleteAgente,
 };
